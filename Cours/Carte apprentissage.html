@@ -1,0 +1,474 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Carte apprentissage</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : en-tête de progression, puis un tableau en 5 colonnes (du point de départ vers la suite) relié par des courbes SVG */
+:root{
+  --bg:#F1F3FA; --surface:#FFFFFF; --surface-2:#E7EBF6; --fg:#1A1E32; --muted:#5C6383; --line:#D3D9EA;
+  --c-concept:#4E5AD6; --c-tech:#0E9886; --c-probleme:#DF4F39; --c-pattern:#C98210; --c-projet:#B73C93;
+  --dot:#C9D0E4; --shadow:0 1px 2px rgba(26,30,50,.06),0 6px 18px rgba(26,30,50,.06);
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10121C; --surface:#1A1D2C; --surface-2:#232739; --fg:#EAECF6; --muted:#9BA2BF; --line:#2F344B;
+  --c-concept:#8E97FF; --c-tech:#3DD0BB; --c-probleme:#FF7C66; --c-pattern:#F3B547; --c-projet:#EC77C8;
+  --dot:#262A3D; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 22px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10121C; --surface:#1A1D2C; --surface-2:#232739; --fg:#EAECF6; --muted:#9BA2BF; --line:#2F344B;
+  --c-concept:#8E97FF; --c-tech:#3DD0BB; --c-probleme:#FF7C66; --c-pattern:#F3B547; --c-projet:#EC77C8;
+  --dot:#262A3D; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 22px rgba(0,0,0,.25); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+
+/* En-tête */
+.head{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px;align-items:end}
+@media (max-width:820px){.head{grid-template-columns:1fr}}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4.4vw,50px);line-height:1.02;margin:6px 0 10px;text-wrap:balance;letter-spacing:-.02em}
+h1 .k{background:linear-gradient(90deg,var(--c-concept),var(--c-projet) 55%,var(--c-probleme));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--muted);max-width:60ch;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-family:var(--f-display);font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--muted)}
+.stat.vu b{color:var(--c-tech)} .stat.ouvert b{color:var(--c-pattern)} .stat.avenir b{color:var(--c-concept)}
+
+.next{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:space-between;
+  background:linear-gradient(110deg,color-mix(in srgb,var(--c-concept) 16%,var(--surface)),color-mix(in srgb,var(--c-projet) 14%,var(--surface)));
+  border:1px solid color-mix(in srgb,var(--c-concept) 35%,var(--line));border-radius:14px;padding:14px 18px}
+.next p{margin:0;min-width:0}
+.next strong{font-family:var(--f-display);font-size:18px}
+.btn{font:600 14px var(--f-body);border:0;border-radius:999px;padding:9px 16px;cursor:pointer;background:var(--fg);color:var(--bg)}
+.btn:focus-visible,.card:focus-visible,.chip:focus-visible,.link:focus-visible{outline:3px solid var(--c-concept);outline-offset:2px}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.filters,.legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-right:8px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* Tableau */
+.scroller{overflow-x:auto;border-radius:18px;border:1px solid var(--line);
+  background-color:var(--surface-2);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.2px);background-size:22px 22px}
+.board{position:relative;min-width:1240px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:44px;padding:22px 26px 30px}
+.edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.edges path{fill:none;stroke-width:2;opacity:.42;transition:opacity .2s,stroke-width .2s}
+.edges path.dashed{stroke-dasharray:5 6}
+.edges circle{opacity:.6;transition:opacity .2s}
+.board.focus .edges path{opacity:.08}
+.board.focus .edges circle{opacity:.1}
+.board.focus .edges path.on{opacity:.95;stroke-width:2.6}
+.board.focus .edges circle.on{opacity:1}
+.lane{display:flex;flex-direction:column;gap:14px;position:relative;z-index:1;min-width:0}
+.lane.center{justify-content:center}
+.lane h2{font-family:var(--f-display);font-size:14px;font-weight:700;margin:0 0 2px;display:flex;align-items:baseline;gap:8px;color:var(--muted)}
+.lane h2 em{font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--muted);opacity:.8}
+
+.card{--c:var(--c-concept);position:relative;text-align:left;width:100%;font:inherit;color:inherit;cursor:pointer;
+  background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px 13px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:6px;transition:transform .18s,opacity .2s,border-color .2s}
+.card:hover{transform:translateY(-2px);border-color:var(--c)}
+.card .cat{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:600;color:var(--c)}
+.card .cat::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.card h3{margin:0;font-family:var(--f-display);font-size:17px;line-height:1.2;font-weight:700;text-wrap:balance}
+.card p{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
+.badge{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:600;border-radius:999px;padding:2px 8px;letter-spacing:.02em}
+.s-vu .badge{background:color-mix(in srgb,var(--c-tech) 16%,var(--surface));color:var(--c-tech)}
+.s-ouvert{border-style:dashed;border-color:color-mix(in srgb,var(--c-pattern) 70%,var(--line))}
+.s-ouvert .badge{background:color-mix(in srgb,var(--c-pattern) 18%,var(--surface));color:var(--c-pattern)}
+.s-avenir{background:color-mix(in srgb,var(--surface) 70%,var(--surface-2))}
+.s-avenir .badge{background:var(--surface-2);color:var(--muted)}
+.s-prochain{border-color:var(--c-concept);box-shadow:0 0 0 4px color-mix(in srgb,var(--c-concept) 22%,transparent),var(--shadow)}
+.s-prochain .badge{background:var(--c-concept);color:var(--surface)}
+.card.hub{padding:18px 16px;background:linear-gradient(160deg,color-mix(in srgb,var(--c-tech) 18%,var(--surface)),var(--surface) 70%)}
+.card.hub h3{font-size:23px}
+.board.focus .card{opacity:.32}
+.board.focus .card.lit{opacity:1}
+.card.hidden{opacity:.12!important;pointer-events:none}
+
+.c-concept{--c:var(--c-concept)} .c-tech{--c:var(--c-tech)} .c-probleme{--c:var(--c-probleme)} .c-pattern{--c:var(--c-pattern)} .c-projet{--c:var(--c-projet)}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+
+/* Modale */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(10,12,22,.5);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal{--c:var(--c-concept);background:var(--surface);color:var(--fg);border-radius:18px;width:min(680px,100%);max-height:100%;overflow:auto;
+  box-shadow:0 30px 80px rgba(0,0,0,.35);border-top:6px solid var(--c)}
+.m-head{padding:20px 22px 6px;display:flex;flex-direction:column;gap:8px;position:relative}
+.m-head h2{font-family:var(--f-display);font-size:28px;line-height:1.1;margin:0;padding-right:40px;text-wrap:balance}
+.m-meta{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;background:color-mix(in srgb,var(--c) 15%,var(--surface));color:var(--c)}
+.pill.st{background:var(--surface-2);color:var(--muted)}
+.close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:18px;cursor:pointer;line-height:1}
+.m-body{padding:6px 22px 22px;display:flex;flex-direction:column;gap:16px}
+.m-body h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.m-body p,.m-body li{margin:0;font-size:14.5px}
+.m-body ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.brief{font-size:16px!important;line-height:1.5;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--c) 9%,var(--surface))}
+pre{margin:0;overflow-x:auto;background:var(--surface-2);border-radius:10px;padding:12px 14px;font:13px/1.5 var(--f-mono)}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+pre code{background:none;padding:0}
+.open{border:1.5px dashed color-mix(in srgb,var(--c-pattern) 70%,var(--line));border-radius:12px;padding:12px 14px}
+.open h4{color:var(--c-pattern)}
+.links{display:flex;flex-wrap:wrap;gap:6px}
+.link{font:500 13px var(--f-body);cursor:pointer;border-radius:999px;padding:5px 11px;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:inline-flex;gap:6px;align-items:center}
+.link::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--lc)}
+.link small{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div>
+      <div class="eyebrow">Master 1 Data &amp; IA · Collecte &amp; Ingestion</div>
+      <h1>Ma carte <span class="k">Kafka &amp; ingestion</span></h1>
+      <p class="lede">Ce qu'on a vu ensemble avant le cours, comment les idées se relient, et les boucles encore ouvertes. Survole une carte pour voir ses liens, clique pour le détail.</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="next">
+    <p><span class="eyebrow">Reprendre ici</span><br><strong>Partitions &amp; clés</strong> · comment Kafka répartit les messages et pourquoi la clé compte</p>
+    <button class="btn" type="button" data-open="partitions">Voir la carte</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="filters" role="group" aria-label="Filtrer par état">
+      <button class="chip" type="button" data-filter="all" aria-pressed="true">Tout</button>
+      <button class="chip" type="button" data-filter="vu" aria-pressed="false">Compris</button>
+      <button class="chip" type="button" data-filter="ouvert" aria-pressed="false">Boucles ouvertes</button>
+      <button class="chip" type="button" data-filter="avenir" aria-pressed="false">À venir</button>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="scroller"><div class="board" id="board"><svg class="edges" id="edges" aria-hidden="true"></svg></div></div>
+  <p class="hint">Mis à jour le 16 novembre 2026, après la discussion de préparation. Sur téléphone, fais glisser le tableau horizontalement.</p>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="m-title"></div>
+</div>
+
+<script>
+const CATS={concept:"Concept",tech:"Techno",probleme:"Problème",pattern:"Pattern",projet:"Projet / toi"};
+const STATUS={vu:"Compris",ouvert:"Boucle ouverte",prochain:"Prochaine étape",avenir:"À venir"};
+const LANES=[
+  {t:"Point de départ",s:"toi"},
+  {t:"Pourquoi Kafka ?",s:"les problèmes"},
+  {t:"Le hub",s:"Kafka"},
+  {t:"Notions acquises",s:"vocabulaire"},
+  {t:"La suite",s:"séances 1 → 7"}
+];
+
+const N=[
+/* ---------- Lane 0 */
+{id:"tmdb",lane:0,cat:"projet",st:"vu",t:"Ton pipeline TMDB",s:"API → nettoyage → Parquet → Postgres, en local.",
+ brief:"Tu as déjà fait les étapes « connecteur » et « stockage » du schéma du cours.",
+ body:`<p>API TMDB → nettoyage et transformation → fichiers Parquet → chargement dans Postgres, lancé à la main sur ta machine.</p>
+ <p>Dans le vocabulaire du cours, c'est de l'<b>ingestion batch en mode pull</b>. Le module ajoute deux briques autour : Kafka au milieu pour transporter les données, Airflow autour pour lancer et surveiller le tout.</p>`,
+ cours:"Séance 1 (batch, pull) et séances 3-4 (connecteurs).",
+ links:["batchpull","airflow","projet"]},
+{id:"fullstack",lane:0,cat:"projet",st:"vu",t:"Ton bagage de dev fullstack",s:"HTTP, APIs, POST vs PUT, microservices.",
+ brief:"Plusieurs notions du cours ont déjà un équivalent que tu connais.",
+ body:`<ul><li><b>POST vs PUT</b> → c'est l'idempotence : rejouer un PUT donne le même résultat.</li>
+ <li><b>Appels HTTP entre services</b> → c'est la situation que Kafka vient découpler.</li>
+ <li><b>Migrations de BDD</b> → c'est l'évolution de schéma, qui revient côté messages Kafka.</li></ul>`,
+ cours:"Utile dès la séance 1 pour comprendre le découplage.",
+ links:["idempotence","microservices","schema"]},
+{id:"batchpull",lane:0,cat:"concept",st:"vu",t:"Batch & pull",s:"Tu vas chercher (pull), par paquets (batch).",
+ brief:"Deux axes pour décrire n'importe quelle ingestion : qui déclenche, et à quel rythme.",
+ body:`<ul><li><b>Pull</b> : ton système interroge la source (appel API planifié, SELECT périodique).</li>
+ <li><b>Push</b> : la source t'envoie les données (webhook).</li>
+ <li><b>Événementiel</b> : la source publie sur un bus (Kafka), les consommateurs s'abonnent.</li>
+ <li><b>Batch</b> : par lots à intervalles. <b>Streaming</b> : chaque événement dès son arrivée.</li></ul>`,
+ cours:"Séance 1 : patterns d'ingestion, batch vs streaming.",
+ links:["etat","polling"]},
+
+/* ---------- Lane 1 */
+{id:"etat",lane:1,cat:"concept",st:"vu",t:"État vs événements",s:"La BDD garde la valeur actuelle, Kafka garde ce qui s'est passé.",
+ brief:"Une BDD stocke l'état actuel de chaque ligne. Kafka stocke la suite ordonnée des événements.",
+ body:`<p>Une table <code>commandes</code> te dit où en est chaque commande maintenant. Un topic <code>commandes</code> contient « commande créée », « commande payée », « commande supprimée »… dans l'ordre où c'est arrivé.</p>
+ <p>En pratique les deux cohabitent : les événements passent par Kafka, puis un consommateur les range dans une BDD ou en Parquet pour qu'on puisse les interroger.</p>`,
+ cours:"Séance 1 : pourquoi Kafka s'impose.",
+ links:["kafka"]},
+{id:"polling",lane:1,cat:"pattern",st:"vu",t:"Polling & watermark",s:"SELECT régulier depuis la dernière date lue.",
+ brief:"Chaque app retient jusqu'où elle a lu (le watermark) et redemande régulièrement ce qui est nouveau.",
+ code:`SELECT * FROM commandes
+WHERE updated_at > :watermark
+ORDER BY updated_at;`,
+ body:`<p>Ça marche, mais chaque app refait ce travail de son côté et la base reçoit des requêtes en continu, souvent pour rien.</p>
+ <p>Règle importante vue en cours : n'avancer le watermark qu'<b>après</b> avoir publié les données.</p>`,
+ cours:"Séance 4 : watermark, ses pièges (horodatages identiques, transactions longues).",
+ links:["suppressions","outbox"]},
+{id:"suppressions",lane:1,cat:"probleme",st:"vu",t:"Suppressions invisibles",s:"Une ligne supprimée ne revient jamais dans un SELECT.",
+ brief:"Le polling ne voit que ce qui existe encore. Une suppression passe inaperçue.",
+ body:`<p>8h : l'app de stats lit la commande 42 et la compte. 9h : la commande 42 est supprimée. 10h : le SELECT ne la renvoie plus, l'app ne voit rien et continue de la compter.</p>
+ <p>Avec Kafka, la suppression est un nouvel événement ajouté à la fin du topic, que tout le monde lit.</p>`,
+ cours:"Séance 4 : soft delete (<code>deleted_at</code>) ou CDC avec Debezium.",
+ links:["kafka"]},
+{id:"microservices",lane:1,cat:"probleme",st:"vu",t:"HTTP direct entre microservices",s:"Commandes appelle Stock, Facturation, Emails, Analytics…",
+ brief:"Quand un service en appelle quatre autres en direct, chacun peut faire échouer ou ralentir tout le reste.",
+ code:`def create_order(req):
+    order = db.insert(req.data)
+    requests.post("http://stock/reserve", json=order)
+    requests.post("http://facturation/invoice", json=order)
+    requests.post("http://emails/confirmation", json=order)
+    requests.post("http://analytics/track", json=order)
+    return 201`,
+ body:`<ul><li><b>Panne</b> : Emails tombe → erreur 500 avec commande déjà créée, ou email jamais envoyé.</li>
+ <li><b>Latence</b> : le service le plus lent fixe le temps de réponse du client.</li>
+ <li><b>Couplage</b> : chaque nouveau service oblige à modifier Commandes.</li>
+ <li><b>Pics</b> : au Black Friday, la surcharge d'un service remonte jusqu'au paiement.</li></ul>
+ <p>Nuance : quand il faut une réponse <i>avant</i> de répondre au client (le stock est-il dispo ?), l'appel HTTP reste nécessaire.</p>`,
+ cours:"Séance 1 : le « spaghetti » N sources × M destinations.",
+ links:["outbox","decouplage","labo"]},
+{id:"outbox",lane:1,cat:"pattern",st:"vu",t:"Colonne email_envoye",s:"Ta proposition : un booléen par traitement + un script de rattrapage.",
+ brief:"Ça existe en production (pattern outbox). Ça marche pour une petite app, ça se complique vite.",
+ code:`rows = db.execute("SELECT * FROM commandes WHERE email_envoye = false")
+for cmd in rows:
+    send_email(cmd)
+    # crash ici → email renvoyé au prochain passage
+    db.execute("UPDATE commandes SET email_envoye = true WHERE id = %s", cmd.id)`,
+ body:`<ul><li>Une colonne par service qui lit la table → migrations sur la table d'une autre équipe.</li>
+ <li>Crash entre l'envoi et l'UPDATE → doublon ou perte.</li>
+ <li>Deux scripts en parallèle → doublons, sauf verrou <code>FOR UPDATE SKIP LOCKED</code>.</li>
+ <li>Lancé rarement = lent ; lancé souvent = charge sur la base.</li></ul>
+ <p>Kafka remplace toutes ces colonnes par <b>un seul offset par consommateur</b>, stocké chez Kafka.</p>`,
+ cours:"Séance 2 : commit avant / après, consumer groups.",
+ links:["commit","topic","schema","labo"]},
+{id:"linkedin",lane:1,cat:"concept",st:"vu",t:"L'origine big data",s:"LinkedIn, 2011 : des milliards d'événements vers plusieurs systèmes.",
+ brief:"Kafka a été créé pour faire circuler un énorme volume d'activité vers plusieurs destinations, chacune à son rythme.",
+ body:`<ul><li>Avant : un pipeline maison par couple source → destination, des copies de logs la nuit, des files de messages qui saturaient.</li>
+ <li>Kafka écrit tout sur disque en ajout à la fin d'un fichier : rapide, peu coûteux, gardé plusieurs jours.</li>
+ <li>Le même flux sert les recommandations en temps réel, Hadoop une fois par nuit, le monitoring en continu.</li>
+ <li>Pendant un pic, l'écart s'accumule sur le disque et le consommateur rattrape ensuite.</li></ul>
+ <p>Les microservices ont ensuite popularisé le même outil pour faire communiquer des services.</p>`,
+ cours:"Séance 1 : volume, vélocité, variété.",
+ links:["kafka","retention","lag"]},
+
+/* ---------- Lane 2 */
+{id:"kafka",lane:2,cat:"tech",st:"vu",hub:true,t:"Kafka",s:"Bus d'événements (message broker). Le serveur s'appelle un broker.",
+ brief:"Un système à part entière, pas une BDD : il ajoute des messages à la fin de fichiers sur disque, sans SQL ni modification.",
+ body:`<ul><li>Les producteurs publient, les consommateurs lisent, sans se connaître.</li>
+ <li>Lire un message ne le supprime pas : d'autres peuvent encore le lire.</li>
+ <li>Les messages restent un temps limité (7 jours par défaut).</li>
+ <li>Des millions de messages par seconde grâce à cette simplicité.</li>
+ <li>Mode KRaft dans le TP : plus besoin de ZooKeeper.</li></ul>`,
+ cours:"Séances 1-2. TP : Kafka et Airflow avec Docker Compose (4 Go de RAM).",
+ links:["topic","retention","decouplage","lag"]},
+
+/* ---------- Lane 3 */
+{id:"decouplage",lane:3,cat:"concept",st:"vu",t:"Découplage",s:"Le producteur ne sait pas qui lit, ni quand.",
+ brief:"La vraie raison d'utiliser Kafka, avant même la question de la charge.",
+ body:`<p>Le service Commandes publie « commande créée » et s'arrête là. Un nouveau service Fidélité s'abonne au topic : zéro ligne modifiée côté Commandes.</p>
+ <p>C'est aussi un des principes durables listés en fin de cours : « un producteur ne doit pas savoir qui consomme ».</p>`,
+ cours:"Séance 1 et réflexion finale du module.",
+ links:["labo"]},
+{id:"topic",lane:3,cat:"concept",st:"vu",t:"Topic & offset",s:"Flux nommé, append-only ; chaque message a un numéro croissant.",
+ brief:"Un topic est un journal où on ne fait qu'ajouter. L'offset est la position d'un message ; chaque consommateur garde le sien.",
+ body:`<ul><li>Offsets 0, 1, 2, 3… qui ne font qu'augmenter.</li>
+ <li>Emails peut être à l'offset 1 200, Analytics à 980 : chacun avance à son rythme.</li>
+ <li>Nommage conseillé : <code>source.entité.version</code>, ex. <code>boutique.commandes.v1</code>.</li></ul>`,
+ cours:"Séance 1 (anatomie d'un topic) et livrable séance 2.",
+ links:["partitions","producer","consumergroups"]},
+{id:"retention",lane:3,cat:"concept",st:"vu",t:"Rétention",s:"Les messages restent 7 jours par défaut.",
+ brief:"Pendant la rétention, on peut relire le passé : rejouer un traitement raté ou brancher un nouveau consommateur.",
+ body:`<p>Si le service Emails tombe 2 heures, les événements l'attendent dans Kafka. Au redémarrage, il reprend à son offset et envoie les emails en retard.</p>
+ <p>Avec une rétention longue, Kafka sert même de remplaçant au batch (architecture Kappa, fin du cours).</p>`,
+ cours:"Séance 1, et « Pour aller plus loin » (Lambda vs Kappa).",
+ links:[]},
+{id:"lag",lane:3,cat:"concept",st:"ouvert",t:"Consumer lag",s:"Messages produits − messages consommés.",
+ brief:"Le retard d'un consommateur. Il monte pendant une panne ou un pic, puis doit redescendre.",
+ body:`<p>Vu en passant avec l'exemple d'Analytics qui prend du retard au Black Friday et rattrape la nuit.</p>
+ <p>Normal : stable ou faible. Alerte : il grandit sans arrêt.</p>`,
+ open:"Pas encore manipulé. Commande pour l'observer : <code>kafka-consumer-groups --describe</code>. Détaillé en séance 2 (scaling) et séance 6 (monitoring).",
+ cours:"Séances 2 et 6.",
+ links:["consumergroups"]},
+{id:"idempotence",lane:3,cat:"concept",st:"vu",t:"Idempotence",s:"Rejouer une opération donne le même résultat.",
+ brief:"Comme un PUT. Puisqu'en cas de panne on rejoue, rejouer ne doit jamais créer de doublon.",
+ code:`INSERT INTO commandes (event_id, ...) VALUES (...)
+ON CONFLICT (event_id) DO UPDATE SET ...;`,
+ body:`<p>Le cours la décrit comme le principe qui rend les autres problèmes solubles. Techniques : UPSERT sur <code>event_id</code>, écraser la partition du jour, identifiants déterministes.</p>`,
+ cours:"Séances 2, 5 (Clear et backfill sans doublon) et 7.",
+ links:["airflow","qualite"]},
+{id:"commit",lane:3,cat:"probleme",st:"ouvert",t:"Commit avant ou après ?",s:"Le crash entre « traiter » et « noter que c'est traité ».",
+ brief:"Tu l'as rencontré avec la colonne email_envoye : le même problème existe avec Kafka.",
+ body:`<ul><li><b>Noter avant de traiter</b> → crash → message jamais traité (perte).</li>
+ <li><b>Traiter avant de noter</b> → crash → message rejoué (doublon), absorbé par l'idempotence.</li></ul>
+ <p>Règle du cours : commit <b>après</b> traitement + traitement idempotent.</p>`,
+ open:"Vu sur ta colonne en BDD, pas encore dans du code Kafka (<code>enable.auto.commit</code>, <code>c.commit(message=msg)</code>).",
+ cours:"Séance 2 : le piège classique, et l'exercice « trouvez les bugs ».",
+ links:["consumergroups","producer"]},
+{id:"schema",lane:3,cat:"concept",st:"ouvert",t:"Évolution de schéma",s:"Ajouter une colonne ou un champ sans rien casser.",
+ brief:"Ta question sur les colonnes : oui, ajouter une colonne peut casser du code existant.",
+ body:`<ul><li><code>INSERT</code> sans liste de colonnes : plante en MySQL, passe en Postgres.</li>
+ <li>Colonne <code>NOT NULL</code> sans défaut : les INSERT existants plantent.</li>
+ <li>Code qui dépend du nombre de colonnes (<code>a, b, c = row</code>, <code>SELECT *</code>).</li>
+ <li>Migration sur grosse table : verrou, ordre de déploiement.</li></ul>
+ <p>Côté Kafka : champ <code>version</code> dans l'enveloppe (séance 2), <code>additionalProperties: True</code> (séance 7).</p>`,
+ open:"Mis de côté volontairement. Mots-clés pour creuser plus tard : backward / forward compatibility, expand and contract, breaking changes, Schema Registry, Avro.",
+ cours:"Séances 2 et 7, puis « Pour aller plus loin ».",
+ links:["qualite"]},
+
+/* ---------- Lane 4 */
+{id:"partitions",lane:4,cat:"concept",st:"prochain",t:"Partitions & clés",s:"Comment Kafka découpe un topic pour tenir la charge.",
+ brief:"La prochaine étape de notre discussion.",
+ body:`<ul><li>Une partition = un sous-ensemble ordonné d'un topic, unité de parallélisme.</li>
+ <li>Même clé (ex. <code>id_client</code>) → même partition → ordre garanti pour ce client.</li>
+ <li>Pas d'ordre garanti entre partitions.</li>
+ <li>Clé à peu de valeurs (ex. pays) → « hot partitions ».</li></ul>`,
+ open:"À voir ensemble : pourquoi l'ordre n'est garanti que par partition, et comment choisir le nombre de partitions (3 pour démarrer le projet).",
+ cours:"Séance 1 (Human Kafka, clés et ordonnancement) et livrable séance 2.",
+ links:["consumergroups"]},
+{id:"producer",lane:4,cat:"tech",st:"avenir",t:"Producer Python",s:"confluent-kafka : clé, sérialisation, acks, flush.",
+ brief:"Le code qui publie dans Kafka.",
+ code:`p.produce("commandes", key="42", value=json.dumps(event),
+          callback=on_delivery)
+p.flush()  # sans flush, les messages en buffer sont perdus`,
+ body:`<ul><li><code>acks=0</code> : aucune garantie. <code>acks=1</code> : le leader confirme. <code>acks=all</code> : tous les réplicas, pour les données critiques.</li>
+ <li>Enveloppe d'événement : <code>event_id</code>, <code>event_type</code>, <code>event_time</code>, <code>source</code>, <code>version</code>, <code>payload</code>.</li></ul>`,
+ cours:"Séance 2.",
+ links:[]},
+{id:"consumergroups",lane:4,cat:"tech",st:"avenir",t:"Consumer & consumer groups",s:"Boucle de poll, commits manuels, plusieurs instances.",
+ brief:"Plusieurs instances d'un même service se partagent les partitions d'un topic.",
+ body:`<p>C'est ce qui règle le problème des « deux scripts en parallèle » de ta colonne <code>email_envoye</code>.</p>
+ <ul><li>Plus de consumers que de partitions → les surnuméraires restent inactifs.</li>
+ <li>Un nouveau <code>group.id</code> relit le topic de son côté, avec ses propres offsets.</li></ul>`,
+ cours:"Séance 2 : rebalancing, garanties at-least-once.",
+ links:[]},
+{id:"airflow",lane:4,cat:"tech",st:"avenir",t:"Airflow",s:"Un cron qui gère dépendances, retries et historique.",
+ brief:"Lance tes connecteurs selon un planning, les relance s'ils plantent, montre ce qui s'est passé. Il ne transporte pas de données.",
+ body:`<ul><li>DAG = graphe de tâches avec dépendances (fan-out / fan-in).</li>
+ <li>Retries avec backoff ; ne pas réessayer une erreur déterministe (401, 400, bug).</li>
+ <li>Piège : un DAG <code>@hourly</code> tourne à la <b>fin</b> de l'heure qu'il traite.</li></ul>`,
+ cours:"Séance 5 (orchestration) et 6 (monitoring).",
+ links:[]},
+{id:"qualite",lane:4,cat:"pattern",st:"avenir",t:"Qualité, DLQ & quarantaine",s:"Valider dès l'ingestion, isoler les messages invalides.",
+ brief:"Un consumer de validation trie : valide → stockage, invalide → Dead-Letter Queue + quarantaine avec le motif d'erreur.",
+ body:`<ul><li>4 niveaux : structure, types, règles métier, cohérence.</li>
+ <li>Outils : jsonschema (message par message), pandera (DataFrame).</li>
+ <li>Taux de rejet > 5 % → alerte (souvent un schéma qui a changé côté source).</li></ul>`,
+ cours:"Séance 7.",
+ links:[]},
+{id:"projet",lane:4,cat:"projet",st:"ouvert",t:"Thème du projet fil rouge",s:"Fiche de cadrage à rendre avant la séance 2.",
+ brief:"Pas encore choisi. Y réfléchir maintenant donne une vraie avance.",
+ body:`<ul><li>Thématique et problème métier.</li>
+ <li>Au moins 2 sources (ex. API REST + BDD ou stockage objet).</li>
+ <li>Volumes estimés, usage final (dashboard, ML, alertes).</li>
+ <li>Format : une page README ou PDF.</li></ul>`,
+ open:"À faire : trouver une idée de thème, et vérifier que Docker tourne avec au moins 4 Go de RAM libres pour le TP.",
+ cours:"Livrable séance 1.",
+ links:[]},
+{id:"labo",lane:4,cat:"projet",st:"ouvert",t:"Labo « faire péter »",s:"HTTP direct, colonne en BDD, puis Kafka : provoquer les pannes.",
+ brief:"Idée de mini-projet pratique, mise de côté pour l'instant : l'exemple des colonnes t'a suffi.",
+ body:`<ul><li>3 services FastAPI dans Docker Compose, un script qui simule des commandes.</li>
+ <li><code>docker stop emails</code>, un <code>sleep(3)</code> dans Analytics, une montée en charge.</li>
+ <li>Même chose avec Kafka : observer le lag monter puis redescendre.</li></ul>`,
+ open:"Disponible si tu veux du concret avant ou après le TP de la séance 1.",
+ cours:"Recoupe le TP Docker Compose (séance 1) et l'exercice « Break It on Purpose » (séance 5).",
+ links:[]}
+];
+
+const byId=Object.fromEntries(N.map(n=>[n.id,n]));
+const E=[];N.forEach(n=>n.links.forEach(l=>{if(byId[l])E.push([n.id,l])}));
+const neighbors=id=>new Set([id,...E.filter(e=>e[0]===id).map(e=>e[1]),...E.filter(e=>e[1]===id).map(e=>e[0])]);
+
+/* Stats & légende */
+const count=k=>N.filter(n=>k==="ouvert"?(n.st==="ouvert"||n.st==="prochain"):n.st===k).length;
+document.getElementById("stats").innerHTML=
+ `<div class="stat vu"><b>${count("vu")}</b><span>notions comprises</span></div>
+  <div class="stat ouvert"><b>${count("ouvert")}</b><span>boucles ouvertes</span></div>
+  <div class="stat avenir"><b>${count("avenir")}</b><span>à venir en cours</span></div>`;
+document.getElementById("legend").innerHTML=Object.entries(CATS).map(([k,v])=>`<span><i style="background:var(--c-${k})"></i>${v}</span>`).join("");
+
+/* Tableau */
+const board=document.getElementById("board"),svg=document.getElementById("edges");
+LANES.forEach((L,i)=>{
+  const lane=document.createElement("div");lane.className="lane"+(i===2?" center":"");
+  lane.innerHTML=`<h2>${L.t} <em>${L.s}</em></h2>`;
+  N.filter(n=>n.lane===i).forEach(n=>{
+    const b=document.createElement("button");b.type="button";b.id="card-"+n.id;b.dataset.id=n.id;
+    b.className=`card c-${n.cat} s-${n.st}${n.hub?" hub":""}`;
+    b.innerHTML=`<span class="badge">${STATUS[n.st]}</span><span class="cat">${CATS[n.cat]}</span><h3>${n.t}</h3><p>${n.s}</p>`;
+    b.addEventListener("click",()=>openModal(n.id));
+    b.addEventListener("mouseenter",()=>focusOn(n.id));b.addEventListener("focus",()=>focusOn(n.id));
+    b.addEventListener("mouseleave",clearFocus);b.addEventListener("blur",clearFocus);
+    lane.appendChild(b);
+  });
+  board.appendChild(lane);
+});
+
+function draw(){
+  const br=board.getBoundingClientRect();
+  svg.setAttribute("viewBox",`0 0 ${br.width} ${br.height}`);
+  svg.innerHTML=E.map(([a,b])=>{
+    const ra=document.getElementById("card-"+a).getBoundingClientRect(),rb=document.getElementById("card-"+b).getBoundingClientRect();
+    const x1=ra.right-br.left,y1=ra.top+ra.height/2-br.top,x2=rb.left-br.left,y2=rb.top+rb.height/2-br.top;
+    const dx=Math.max(40,(x2-x1)*.45),col=`var(--c-${byId[a].cat})`;
+    const dashed=byId[b].st==="avenir"||byId[b].st==="prochain"?" dashed":"";
+    return `<path data-a="${a}" data-b="${b}" class="${dashed}" stroke="${col}" d="M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}"/>
+            <circle data-a="${a}" data-b="${b}" cx="${x2}" cy="${y2}" r="3.5" fill="${col}"/>`;
+  }).join("");
+}
+function focusOn(id){
+  const nb=neighbors(id);board.classList.add("focus");
+  board.querySelectorAll(".card").forEach(c=>c.classList.toggle("lit",nb.has(c.dataset.id)));
+  svg.querySelectorAll("[data-a]").forEach(p=>p.classList.toggle("on",p.dataset.a===id||p.dataset.b===id));
+}
+function clearFocus(){board.classList.remove("focus")}
+new ResizeObserver(draw).observe(board);
+if(document.fonts)document.fonts.ready.then(draw);
+
+/* Filtres */
+document.querySelectorAll("[data-filter]").forEach(btn=>btn.addEventListener("click",()=>{
+  const f=btn.dataset.filter;
+  document.querySelectorAll("[data-filter]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));
+  N.forEach(n=>{const show=f==="all"||n.st===f||(f==="ouvert"&&n.st==="prochain");
+    document.getElementById("card-"+n.id).classList.toggle("hidden",!show)});
+}));
+
+/* Modale */
+const overlay=document.getElementById("overlay"),modal=document.getElementById("modal");let lastFocus=null;
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function chip(id,label){const n=byId[id];return `<button type="button" class="link" data-go="${id}" style="--lc:var(--c-${n.cat})">${n.t}${label?` <small>${label}</small>`:""}</button>`}
+function openModal(id){
+  const n=byId[id];
+  const out=E.filter(e=>e[0]===id).map(e=>e[1]),inc=E.filter(e=>e[1]===id).map(e=>e[0]);
+  modal.className=`modal c-${n.cat}`;
+  modal.innerHTML=`<div class="m-head">
+      <div class="m-meta"><span class="pill">${CATS[n.cat]}</span><span class="pill st">${STATUS[n.st]}</span></div>
+      <h2 id="m-title">${n.t}</h2>
+      <button class="close" type="button" aria-label="Fermer">×</button>
+    </div>
+    <div class="m-body">
+      <p class="brief">${n.brief}</p>
+      ${n.body?`<div><h4>Concrètement</h4>${n.body}</div>`:""}
+      ${n.code?`<pre><code>${esc(n.code)}</code></pre>`:""}
+      ${n.open?`<div class="open"><h4>Boucle ouverte</h4><p>${n.open}</p></div>`:""}
+      <div><h4>Dans le cours</h4><p>${n.cours}</p></div>
+      ${out.length?`<div><h4>Mène vers</h4><div class="links">${out.map(x=>chip(x)).join("")}</div></div>`:""}
+      ${inc.length?`<div><h4>Vient de</h4><div class="links">${inc.map(x=>chip(x)).join("")}</div></div>`:""}
+    </div>`;
+  overlay.hidden=false;modal.scrollTop=0;
+  modal.querySelector(".close").addEventListener("click",closeModal);
+  modal.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>openModal(b.dataset.go)));
+  modal.querySelector(".close").focus();
+}
+function closeModal(){overlay.hidden=true;if(lastFocus)lastFocus.focus()}
+overlay.addEventListener("click",e=>{if(e.target===overlay)closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.hidden)closeModal()});
+document.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>{lastFocus=b;openModal(b.dataset.open)}));
+document.querySelectorAll(".card").forEach(c=>c.addEventListener("click",()=>{lastFocus=c},{capture:true}));
+</script>
+
+</body></html>
